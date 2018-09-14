@@ -7,6 +7,11 @@ use Xxtime\Media\ProviderAbstract;
 class Weibo extends ProviderAbstract
 {
 
+    public function __construct($config = [])
+    {
+        $this->config = $config;
+    }
+
     // 登录
     public function login()
     {
@@ -18,7 +23,7 @@ class Weibo extends ProviderAbstract
     }
 
     // 修改密码
-    public function changePassword()
+    public function password()
     {
     }
 

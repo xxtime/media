@@ -9,7 +9,7 @@ interface ProviderInterface
 
     public function logout();
 
-    public function changePassword();
+    public function password();
 
     public function post();
 
