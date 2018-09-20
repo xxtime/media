@@ -9,7 +9,7 @@ use Xxtime\Media\Exception\ErrorException;
 /**
  * @method array login()
  * @method array logout()
- * @method array changePassword()
+ * @method array password()
  * @method array post()
  * @method array follow()
  * @method array unfollow()
