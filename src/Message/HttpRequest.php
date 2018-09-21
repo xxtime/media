@@ -16,20 +16,20 @@ class HttpRequest
      * multipart/form-data
      */
     protected $options = [
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT        => 30,
-        CURLOPT_HEADER         => false,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_AUTOREFERER    => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS      => 5,
-        CURLOPT_COOKIEFILE     => null,
-        CURLOPT_COOKIEJAR      => null,
-        CURLOPT_USERAGENT      => 'CurlUtils (XT) https://blog.xxtime.com',
-        CURLOPT_HTTPHEADER     => [
-            'accept-language: en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
-            'Content-Type: application/x-www-form-urlencoded;charset=utf-8',
-            //'Cookie: locale=en_US',
+        "CURLOPT_CONNECTTIMEOUT" => 10,
+        "CURLOPT_TIMEOUT"        => 30,
+        "CURLOPT_HEADER"         => false,
+        "CURLOPT_RETURNTRANSFER" => true,
+        "CURLOPT_AUTOREFERER"    => true,
+        "CURLOPT_FOLLOWLOCATION" => true,
+        "CURLOPT_MAXREDIRS"      => 5,
+        "CURLOPT_COOKIEFILE"     => null,
+        "CURLOPT_COOKIEJAR"      => null,
+        "CURLOPT_USERAGENT"      => "CurlUtils (XT) https://blog.xxtime.com",
+        "CURLOPT_HTTPHEADER"     => [
+            "Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+            "Content-Type: application/x-www-form-urlencoded;charset=utf-8",
+            //"Cookie: locale=en_US",
         ]
     ];
 
@@ -45,12 +45,7 @@ class HttpRequest
             return false;
         }
         foreach ($options as $opt => $value) {
-            if (is_int($opt)) {
-                $this->options[$opt] = $value;
-            }
-            elseif (defined($opt)) {
-                $this->options[constant($opt)] = $value;
-            }
+            $this->options[$opt] = $value;
         }
     }
 
@@ -86,7 +81,7 @@ class HttpRequest
             }
         }
         $options = $this->options;
-        $options[CURLOPT_HTTPGET] = true;
+        $options["CURLOPT_HTTPGET"] = true;
         $output = $this->curlInit($url, $options);
         return $output;
     }
@@ -102,9 +97,9 @@ class HttpRequest
     public function post($url = '', $data = [])
     {
         $options = $this->options;
-        $options[CURLOPT_POST] = true;
+        $options["CURLOPT_POST"] = true;
         if ($data) {
-            $options[CURLOPT_POSTFIELDS] = $data;
+            $options["CURLOPT_POSTFIELDS"] = $data;
         }
         $output = $this->curlInit($url, $options);
         return $output;
@@ -120,9 +115,14 @@ class HttpRequest
      */
     protected function curlInit($url = '', $options = [])
     {
+        $optionsFormat = [];
+        foreach ($options as $key => $value) {
+            $optionsFormat[constant($key)] = $value;
+        }
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, str_replace(' ', '+', trim($url)));
-        curl_setopt_array($ch, $options);
+        curl_setopt_array($ch, $optionsFormat);
         $output = curl_exec($ch);
 
         $info = curl_getinfo($ch);
