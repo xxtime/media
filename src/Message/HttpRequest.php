@@ -23,8 +23,6 @@ class HttpRequest
         "CURLOPT_AUTOREFERER"    => true,
         "CURLOPT_FOLLOWLOCATION" => true,
         "CURLOPT_MAXREDIRS"      => 5,
-        "CURLOPT_COOKIEFILE"     => null,
-        "CURLOPT_COOKIEJAR"      => null,
         "CURLOPT_USERAGENT"      => "CurlUtils (XT) https://blog.xxtime.com",
         "CURLOPT_HTTPHEADER"     => [
             "Accept-Language: en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
@@ -132,7 +130,13 @@ class HttpRequest
         }
 
         curl_close($ch);
-        return $output;
+        list($header, $body) = explode("\r\n\r\n", $output);
+        return [
+            'url'    => $info['url'],
+            'status' => $info['http_code'],
+            'header' => $header,
+            'body'   => $body
+        ];
     }
 
 }
