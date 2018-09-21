@@ -7,6 +7,8 @@ use Xxtime\Media\Exception\ErrorException;
 
 
 /**
+ * @method array getCookies()
+ * @method array setCookies()
  * @method array login()
  * @method array logout()
  * @method array password()
