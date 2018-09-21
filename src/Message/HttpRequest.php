@@ -178,12 +178,22 @@ class HttpRequest
 
 
     /**
-     * get response body
+     * get response body - RAW
      * @return string
      */
     public function getBody()
     {
         return $this->body;
+    }
+
+
+    /**
+     * get response body - OBJECT
+     * @return string
+     */
+    public function getBodyObject()
+    {
+        return json_decode($this->body, true);
     }
 
 
