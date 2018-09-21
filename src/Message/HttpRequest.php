@@ -9,6 +9,27 @@ class HttpRequest
 {
 
     /**
+     * http response code
+     * @var int
+     */
+    private $status = 0;
+
+
+    /**
+     * response header
+     * @var string
+     */
+    private $header = '';
+
+
+    /**
+     * response body
+     * @var string
+     */
+    private $body = '';
+
+
+    /**
      * default curl options
      * application/x-www-form-urlencoded
      * application/json
@@ -30,6 +51,38 @@ class HttpRequest
             //"Cookie: locale=en_US",
         ]
     ];
+
+
+    /**
+     * curl init
+     * @param string $url
+     * @param array $options
+     * @return mixed
+     * @throws CurlException
+     */
+    protected function curlInit($url = '', $options = [])
+    {
+        $optionsFormat = [];
+        foreach ($options as $key => $value) {
+            $optionsFormat[constant($key)] = $value;
+        }
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, str_replace(' ', '+', trim($url)));
+        curl_setopt_array($ch, $optionsFormat);
+        $output = curl_exec($ch);
+
+        $info = curl_getinfo($ch);
+        $this->status = $info['http_code'];
+        if (!$this->status) {
+            curl_close($ch);
+            throw new CurlException('error request: ' . $info['url']);
+        }
+
+        curl_close($ch);
+        list($this->header, $this->body) = explode("\r\n\r\n", $output);
+        return $this->body;
+    }
 
 
     /**
@@ -105,38 +158,49 @@ class HttpRequest
 
 
     /**
-     * curl init
-     * @param string $url
-     * @param array $options
-     * @return mixed
-     * @throws CurlException
+     * get response status
+     * @return int
      */
-    protected function curlInit($url = '', $options = [])
+    public function getStatus()
     {
-        $optionsFormat = [];
-        foreach ($options as $key => $value) {
-            $optionsFormat[constant($key)] = $value;
+        return $this->status;
+    }
+
+
+    /**
+     * get response header
+     * @return string
+     */
+    public function getHeader()
+    {
+        return $this->header;
+    }
+
+
+    /**
+     * get response body
+     * @return string
+     */
+    public function getBody()
+    {
+        return $this->body;
+    }
+
+
+    /**
+     * get response cookies
+     * @return string
+     */
+    public function getCookies()
+    {
+        preg_match_all('/Set-Cookie:[^;]+;/i', $this->getHeader(), $cookies);
+        $result = '';
+        if ($cookies) {
+            foreach ($cookies['0'] as $cookie) {
+                $result .= substr($cookie, 12);
+            }
         }
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, str_replace(' ', '+', trim($url)));
-        curl_setopt_array($ch, $optionsFormat);
-        $output = curl_exec($ch);
-
-        $info = curl_getinfo($ch);
-        if ($info['http_code'] != 200) {
-            curl_close($ch);
-            throw new CurlException('response http_code: ' . $info['http_code']);
-        }
-
-        curl_close($ch);
-        list($header, $body) = explode("\r\n\r\n", $output);
-        return [
-            'url'    => $info['url'],
-            'status' => $info['http_code'],
-            'header' => $header,
-            'body'   => $body
-        ];
+        return $result;
     }
 
 }
