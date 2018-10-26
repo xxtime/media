@@ -118,7 +118,7 @@ class HttpRequest
      * @return bool|mixed
      * @throws CurlException
      */
-    public function get($url = '', $data = null)
+    public function getRequest($url = '', $data = null)
     {
         if ($data) {
             if (!is_array($data)) {
@@ -145,7 +145,7 @@ class HttpRequest
      * @return mixed
      * @throws CurlException
      */
-    public function post($url = '', $data = [])
+    public function postRequest($url = '', $data = [])
     {
         $options = $this->options;
         $options["CURLOPT_POST"] = true;

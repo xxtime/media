@@ -66,7 +66,7 @@ EOF;
             'hfp'          => '',
         ];
 
-        $this->httpRequest->post(self::LOGIN_URL, http_build_query($data));
+        $this->httpRequest->postRequest(self::LOGIN_URL, http_build_query($data));
         if ($this->httpRequest->getStatus() != 200) {
             throw new ErrorException('http code: ' . $this->httpRequest->getStatus());
         }
@@ -75,7 +75,9 @@ EOF;
             throw new ResponseException($response['msg']);
         }
 
-        $this->cookie = $this->httpRequest->getCookies();
+        $this->setCookies($this->httpRequest->getCookies());
+
+        return true;
     }
 
 
