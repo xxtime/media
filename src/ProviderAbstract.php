@@ -18,11 +18,15 @@ abstract class ProviderAbstract implements ProviderInterface
 
     protected function __construct($config = [])
     {
-        $this->config = $config;
+        // first init httpRequest
         $this->httpRequest = new HttpRequest();
+
+        // second set config
         if (!empty($config['cookies'])) {
             $this->setCookies($config['cookies']);
+            unset($config['cookies']);
         }
+        $this->config = $config;
     }
 
 
