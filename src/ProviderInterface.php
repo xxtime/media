@@ -9,9 +9,9 @@ interface ProviderInterface
 
     public function logout();
 
-    public function password();
+    public function password($password = "", $pass = "");
 
-    public function post();
+    public function post($text, $file);
 
     public function follow();
 
