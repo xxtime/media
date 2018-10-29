@@ -20,7 +20,11 @@ class Weibo extends ProviderAbstract
     const PASS_URL = '';
 
 
-    public function __construct($config = [])
+    /**
+     * Weibo constructor.
+     * @param array $config
+     */
+    public function __construct($config = ["user" => null, "password" => null, "cookies" => null])
     {
         parent::__construct($config);
         $this->setHeaders();

@@ -16,7 +16,7 @@ abstract class ProviderAbstract implements ProviderInterface
     protected $httpRequest;
 
 
-    protected function __construct($config = [])
+    protected function __construct(array $config)
     {
         // first init httpRequest
         $this->httpRequest = new HttpRequest();

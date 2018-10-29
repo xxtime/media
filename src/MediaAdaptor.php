@@ -3,7 +3,7 @@
 
 namespace Xxtime\Media;
 
-use Xxtime\Media\Exception\ErrorException;
+use Xxtime\Media\ProviderInterface;
 
 
 /**
@@ -23,17 +23,9 @@ class MediaAdaptor
     private $adaptor;
 
 
-    public function __construct($adaptor = null)
+    public function __construct(ProviderInterface $adaptor)
     {
-        if (!$adaptor) {
-            throw new ErrorException('no adaptor');
-        }
-        if (is_object($adaptor)) {
-            $this->adaptor = $adaptor;
-        }
-        else {
-            throw new ErrorException('error adaptor');
-        }
+        $this->adaptor = $adaptor;
     }
 
 
