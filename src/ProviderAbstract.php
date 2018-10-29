@@ -36,11 +36,8 @@ abstract class ProviderAbstract implements ProviderInterface
     }
 
 
-    public function setCookies($cookies)
+    public function setCookies($cookies = "")
     {
-        if (is_array($cookies)) {
-            $cookies = $cookies['0'];
-        }
         $this->cookie = $cookies;
         $this->httpRequest->setOptions([
             'CURLOPT_COOKIE' => $cookies

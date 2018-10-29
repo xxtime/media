@@ -31,7 +31,7 @@ class MediaAdaptor
 
     public function __call($name, $arguments)
     {
-        return $this->adaptor->$name($arguments);
+        return $this->adaptor->$name(...$arguments);
     }
 
 }
