@@ -30,6 +30,13 @@ class HttpRequest
 
 
     /**
+     * curl_getinfo data
+     * @var null
+     */
+    private $reqInfo = null;
+
+
+    /**
      * default curl options
      * application/x-www-form-urlencoded
      * application/json
@@ -37,6 +44,7 @@ class HttpRequest
      * multipart/form-data
      */
     protected $options = [
+        "CURLINFO_HEADER_OUT"    => true,
         "CURLOPT_CONNECTTIMEOUT" => 10,
         "CURLOPT_TIMEOUT"        => 30,
         "CURLOPT_HEADER"         => false,
@@ -72,11 +80,11 @@ class HttpRequest
         curl_setopt_array($ch, $optionsFormat);
         $output = curl_exec($ch);
 
-        $info = curl_getinfo($ch);
-        $this->status = $info['http_code'];
+        $this->reqInfo = curl_getinfo($ch);
+        $this->status = $this->reqInfo['http_code'];
         if (!$this->status) {
             curl_close($ch);
-            throw new CurlException('error request: ' . $info['url']);
+            throw new CurlException('error request: ' . $this->reqInfo['url']);
         }
 
         curl_close($ch);
@@ -184,6 +192,16 @@ class HttpRequest
     public function getBody()
     {
         return $this->body;
+    }
+
+
+    /**
+     * get request header info
+     * @return array
+     */
+    public function getReqInfo()
+    {
+        return $this->reqInfo;
     }
 
 

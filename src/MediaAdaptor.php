@@ -8,7 +8,7 @@ use Xxtime\Media\ProviderInterface;
 
 /**
  * @method array getCookies()
- * @method array setCookies()
+ * @method array setCookies($string)
  * @method array login()
  * @method array logout()
  * @method array password()
