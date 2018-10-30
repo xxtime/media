@@ -2,10 +2,12 @@
 
 namespace Xxtime\Media\Providers;
 
+use GuzzleHttp\Psr7\Request;
 use Xxtime\Media\Exception\ErrorException;
 use Xxtime\Media\Exception\RequestException;
 use Xxtime\Media\Exception\ResponseException;
 use Xxtime\Media\ProviderAbstract;
+use Xxtime\Media\Utils\Tools;
 
 /**
  * Class Weibo
@@ -14,10 +16,16 @@ use Xxtime\Media\ProviderAbstract;
 class Weibo extends ProviderAbstract
 {
 
+    use Tools;
+
+
     const LOGIN_URL = 'https://passport.weibo.cn/sso/login';
 
 
     const PASS_URL = '';
+
+
+    private $headers = null;
 
 
     /**
@@ -33,24 +41,24 @@ class Weibo extends ProviderAbstract
 
     private function setHeaders()
     {
-        // 必须存在的头信息: Content-Type, Referer
-        $headers = <<<EOF
-Content-Type:application/x-www-form-urlencoded
-EOF;
-        $this->httpRequest->setOptions([
-            'CURLOPT_HEADER'     => true,
-            'CURLOPT_USERAGENT'  => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/69.0.3497.91 Mobile/15E148 Safari/605.1',
-            'CURLOPT_HTTPHEADER' => explode("\n", $headers),
-            "CURLOPT_REFERER"    => "https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=https%3A%2F%2Fm.weibo.cn",
-        ]);
+        $this->headers = [
+            "User-Agent"   => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/69.0.3497.91 Mobile/15E148 Safari/605.1',
+            "Referer"      => "https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=https%3A%2F%2Fm.weibo.cn",
+            "Content-Type" => "application/x-www-form-urlencoded",
+        ];
     }
 
 
     // 登录
     public function login()
     {
-        $this->httpRequest->getRequest("https://m.weibo.cn/");
-        $cookie_part_1 = $this->httpRequest->getCookies();
+        // $response = $this->guzzle->request("GET", 'http://localhost:8080', ["headers" => $this->headers]);
+        $request = new Request('GET', 'https://m.weibo.cn/', $this->headers);
+        $response = $this->guzzle->send($request);
+        if ($response->getStatusCode() != 200) {
+            throw new ResponseException("error http code " . $response->getStatusCode());
+        }
+        $cookies1 = $this->getParseCookie($response->getHeader("Set-Cookie"));
 
 
         /**
@@ -73,28 +81,33 @@ EOF;
             'hff'          => '',
             'hfp'          => '',
         ];
-
-        $this->setCookies($cookie_part_1);
-        $this->httpRequest->postRequest(self::LOGIN_URL, http_build_query($data));
-        if ($this->httpRequest->getStatus() != 200) {
-            throw new ErrorException('http code: ' . $this->httpRequest->getStatus());
+        $this->headers["Cookie"] = $cookies1;
+        $request = new Request('POST', self::LOGIN_URL, $this->headers, http_build_query($data));
+        $response = $this->guzzle->send($request);
+        if ($response->getStatusCode() != 200) {
+            throw new ResponseException("error http code " . $response->getStatusCode());
         }
-        $response = $this->httpRequest->getBodyObject();
-        if ($response['retcode'] != 20000000) {
-            throw new ResponseException($response['msg']);
+        $body = json_decode($response->getBody()->getContents(), true);
+        if ($body['retcode'] != 20000000) {
+            throw new ResponseException($body['msg']);
         }
-        $cookie_part_2 = $this->httpRequest->getCookies();
+        $cookies2 = $this->getParseCookie($response->getHeader("Set-Cookie"));
 
 
         // get cookie part 3 with csrf code
-        $CODE_URL = "https://m.weibo.cn/api/config";
-        $this->setCookies($cookie_part_1 . $cookie_part_2);
-        $this->httpRequest->getRequest($CODE_URL);
-        $cookie_part_3 = $this->httpRequest->getCookies();
-        $ret = $this->httpRequest->getBodyObject();
-        $csrf_code = $ret["data"]["st"];
+        $this->headers["Cookie"] .= $cookies2;
+        $request = new Request('GET', "https://m.weibo.cn/api/config", $this->headers);
+        $response = $this->guzzle->send($request);
+        if ($response->getStatusCode() != 200) {
+            throw new ResponseException("error http code " . $response->getStatusCode());
+        }
+        $body = json_decode($response->getBody()->getContents(), true);
+        $csrf_code = $body["data"]["st"];
+        $cookies3 = $this->getParseCookie($response->getHeader("Set-Cookie"));
 
-        $this->setCookies($cookie_part_1 . $cookie_part_2 . $cookie_part_3);
+
+        $this->headers["Cookie"] .= $cookies3;
+        $this->setCookies($this->headers["Cookie"]);
 
         return true;
     }
