@@ -2,19 +2,16 @@
 
 namespace Xxtime\Media;
 
-use Xxtime\Media\Message\HttpRequest;
 use GuzzleHttp\Client;
 
 abstract class ProviderAbstract implements ProviderInterface
 {
 
-    protected $config;
+
+    private $config;
 
 
-    protected $cookie;
-
-
-    protected $httpRequest;
+    private $cookie;
 
 
     protected $guzzle;
@@ -22,9 +19,7 @@ abstract class ProviderAbstract implements ProviderInterface
 
     protected function __construct(array $config)
     {
-        // first init httpRequest
-        $this->httpRequest = new HttpRequest();
-        // guzzle will replace httpRequest
+        // @see http://docs.guzzlephp.org
         $this->guzzle = new Client([
             'timeout' => 5,
         ]);
@@ -38,6 +33,18 @@ abstract class ProviderAbstract implements ProviderInterface
     }
 
 
+    protected function getConfig($key = null)
+    {
+        if ($key == null) {
+            return $this->config;
+        }
+        if (isset($this->config[$key])) {
+            return $this->config[$key];
+        }
+        return null;
+    }
+
+
     public function getCookies()
     {
         return $this->cookie;
@@ -46,10 +53,7 @@ abstract class ProviderAbstract implements ProviderInterface
 
     public function setCookies($cookies = "")
     {
-        $this->cookie = $cookies;
-        $this->httpRequest->setOptions([
-            'CURLOPT_COOKIE' => $cookies
-        ]);
+        return $this->cookie = $cookies;
     }
 
 }
