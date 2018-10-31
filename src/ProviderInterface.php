@@ -11,7 +11,7 @@ interface ProviderInterface
 
     public function password($password = "", $pass = "");
 
-    public function post($text, $file);
+    public function post(array $data);
 
     public function follow();
 
