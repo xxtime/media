@@ -3,7 +3,7 @@
 namespace Xxtime\Media\Utils;
 
 
-trait Tools
+trait ToolsTrait
 {
 
     /**

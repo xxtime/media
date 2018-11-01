@@ -6,8 +6,9 @@ use GuzzleHttp\Psr7\Request;
 use Xxtime\Media\Exception\ErrorException;
 use Xxtime\Media\Exception\RequestException;
 use Xxtime\Media\Exception\ResponseException;
+use Xxtime\Media\Message\ResponsePost;
 use Xxtime\Media\ProviderAbstract;
-use Xxtime\Media\Utils\Tools;
+use Xxtime\Media\Utils\ToolsTrait;
 
 /**
  * Class Weibo
@@ -16,7 +17,7 @@ use Xxtime\Media\Utils\Tools;
 class Weibo extends ProviderAbstract
 {
 
-    use Tools;
+    use ToolsTrait;
 
 
     const URL_LOG = 'https://passport.weibo.cn/sso/login';
@@ -209,9 +210,11 @@ class Weibo extends ProviderAbstract
         $UNREAD_URL = self::URL_UNR . "?t=" . time() . "000";
         //$this->guzzle->request("GET", $UNREAD_URL, ["headers" => $this->headers]);
 
-        return [
-            "postId" => $body["data"]["id"]
-        ];
+
+        return new ResponsePost([
+            "id"      => $body["data"]["id"],
+            "content" => $data["content"],
+        ]);
     }
 
 
