@@ -7,6 +7,7 @@ use Xxtime\Media\Exception\ErrorException;
 use Xxtime\Media\Exception\RequestException;
 use Xxtime\Media\Exception\ResponseException;
 use Xxtime\Media\Message\ResponsePost;
+use Xxtime\Media\Message\ResponseProfile;
 use Xxtime\Media\ProviderAbstract;
 use Xxtime\Media\Utils\ToolsTrait;
 
@@ -143,6 +144,78 @@ class Weibo extends ProviderAbstract
         }
 
         return false;
+    }
+
+
+    public function profile($uid = null)
+    {
+        if (!$uid) {
+            throw new RequestException("no uid set");
+        }
+        // warning: use computer user-agent, not mobile user-agent
+        $this->headers["Referer"] = "https://weibo.com/p/{$uid}?is_all=1";
+        $this->headers["Cookie"] = $this->getCookies();
+        $this->headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
+        $url = "https://weibo.com/p/{$uid}/info";
+        $request = new Request('GET', $url, $this->headers);
+        $response = $this->guzzle->send($request);
+
+        $html = $response->getBody()->getContents();
+        $data = [];
+
+        preg_match('/昵称(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["name"] = $matches['5'];
+        }
+
+        preg_match('/真实姓名(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["realName"] = $matches['5'];
+        }
+
+        preg_match('/性别(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["gender"] = $matches['5'];
+        }
+
+        // TODO :: 部分用户生日格式正确 eg., https://weibo.com/p/1003061474398241/info
+        preg_match('/生日(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $date = date_parse_from_format('Y年m月d日', $matches['5']);
+            $data["birthday"] = "{$date['year']}-" . sprintf("%'.02d", $date['month']) . "-{$date['day']}";
+        }
+
+        preg_match('/所在地(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["locale"] = $matches['5'];
+        }
+
+        preg_match('/简介(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["desc"] = $matches['5'];
+        }
+
+        preg_match('/注册时间(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["createTime"] = strtotime(trim($matches['5'], " ,\\r\\n,\r\n"));
+        }
+
+        preg_match('/photo_wrap(.*)(img src=)(.*)( alt)/U', $html, $matches);
+        if ($matches) {
+            $data["avatar"] = 'http://' . trim(str_replace(['"', '\\'], '', $matches['3']), "/,\ ");
+        }
+
+        preg_match('/当前等级(.*)(S_txt1)(.*)(Lv.)(.*)(<)/U', $html, $matches);
+        if ($matches) {
+            $data["level"] = $matches['5'];
+        }
+
+        $data["tags"] = null;
+        $data["followNum"] = null;
+        $data["followersNum"] = null;
+        $data["postsNum"] = null;
+
+        return new ResponseProfile($data);
     }
 
 
