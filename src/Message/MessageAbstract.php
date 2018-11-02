@@ -30,7 +30,7 @@ abstract class MessageAbstract implements MessageInterface
 
     final public function getJsonData()
     {
-        return json_encode($this->data);
+        return json_encode($this->data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
 }

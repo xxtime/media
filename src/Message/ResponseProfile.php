@@ -48,7 +48,7 @@ class ResponseProfile extends MessageAbstract
 
     public function getCollege()
     {
-        return $this->getAttribute("college");
+        return $this->getAttribute("university");
     }
 
     public function getDesc()

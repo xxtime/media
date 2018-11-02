@@ -223,10 +223,45 @@ class Weibo extends ProviderAbstract
             $data["level"] = $matches['5'];
         }
 
-        $data["tags"] = null;
-        $data["followNum"] = null;
-        $data["followersNum"] = null;
-        $data["postsNum"] = null;
+        preg_match('/标签：(.*)ul/i', $html, $matches);
+        $part = str_replace(['\r\n', '\\'], ["\r\n", ''], $matches['1']);
+        preg_match_all('/\s{30,}(.)*\s{30,}<\/a>/', $part, $matches);
+        if ($matches) {
+            $tags = [];
+            foreach ($matches[0] as $m) {
+                $tags[] = trim($m, "\<\/a\>,\r\n,\ ");
+            }
+            $data["tags"] = $tags;
+        }
+
+        // 关注数 粉丝数 推文数
+        preg_match('/tb_counter[\S\s]+tbody/', $html, $matches);
+        $part = str_replace(['\t', '\\'], '', $matches[0]);
+        preg_match_all('/>[\d]*<\/strong/', $part, $matches);
+        if ($matches) {
+            $count = [];
+            foreach ($matches[0] as $m) {
+                $count[] = substr($m, 1, -8);
+            }
+            $data["followNum"] = $count[0];
+            $data["followersNum"] = $count[1];
+            $data["postsNum"] = $count[2];
+        }
+
+        preg_match('/教育信息[\S\s]*标签信息/', $html, $matches);
+        if ($matches) {
+            $part = str_replace(['\r\n', '\\', '<br/>'], ['', '', "\n"], $matches[0]);
+            preg_match('/大学(.)*infedu(.)*<\/a>/', $part, $matches);
+            if ($matches) {
+                $off = strpos($matches[0], 'infedu');
+                $data["university"] = substr($matches[0], $off + 8, -4);
+            }
+            preg_match('/高中(.)*infedu(.)*<\/a>/', $part, $matches);
+            if ($matches) {
+                $off = strpos($matches[0], 'infedu');
+                $data["highSchool"] = substr($matches[0], $off + 8, -4);
+            }
+        }
 
         return new ResponseProfile($data);
     }
