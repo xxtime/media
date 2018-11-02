@@ -36,6 +36,12 @@ class Weibo extends ProviderAbstract
     const URL_UPL = "https://m.weibo.cn/api/statuses/uploadPic";
 
 
+    const AGE_MOB = "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/69.0.3497.91 Mobile/15E148 Safari/605.1";
+
+
+    const AGE_WEB = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
+
+
     private $headers = null;
 
 
@@ -56,7 +62,7 @@ class Weibo extends ProviderAbstract
     private function setHeaders()
     {
         $this->headers = [
-            "User-Agent"   => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/69.0.3497.91 Mobile/15E148 Safari/605.1',
+            "User-Agent"   => self::AGE_MOB,
             "Content-Type" => "application/x-www-form-urlencoded",
         ];
     }
@@ -155,7 +161,7 @@ class Weibo extends ProviderAbstract
         // warning: use computer user-agent, not mobile user-agent
         $this->headers["Referer"] = "https://weibo.com/p/{$uid}?is_all=1";
         $this->headers["Cookie"] = $this->getCookies();
-        $this->headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
+        $this->headers["User-Agent"] = self::AGE_WEB;
         $url = "https://weibo.com/p/{$uid}/info";
         $request = new Request('GET', $url, $this->headers);
         $response = $this->guzzle->send($request);
@@ -178,11 +184,18 @@ class Weibo extends ProviderAbstract
             $data["gender"] = $matches['5'];
         }
 
-        // TODO :: 部分用户生日格式正确 eg., https://weibo.com/p/1003061474398241/info
         preg_match('/生日(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
         if ($matches) {
-            $date = date_parse_from_format('Y年m月d日', $matches['5']);
-            $data["birthday"] = "{$date['year']}-" . sprintf("%'.02d", $date['month']) . "-{$date['day']}";
+            if (strpos($matches['5'], '年') === false) {
+                $date = date_parse_from_format('m月d日', $matches['5']);
+                $date['year'] = '0000';
+            }
+            else {
+                $date = date_parse_from_format('Y年m月d日', $matches['5']);
+            }
+            $data["birthday"] = "{$date['year']}-"
+                . sprintf("%'.02d", $date['month']) . "-"
+                . sprintf("%'.02d", $date['day']);
         }
 
         preg_match('/所在地(.*)(pt_detail)(.*)(>)(.*)(<)/U', $html, $matches);
