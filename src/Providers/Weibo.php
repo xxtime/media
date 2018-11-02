@@ -243,9 +243,9 @@ class Weibo extends ProviderAbstract
             foreach ($matches[0] as $m) {
                 $count[] = substr($m, 1, -8);
             }
-            $data["followNum"] = $count[0];
-            $data["followersNum"] = $count[1];
-            $data["postsNum"] = $count[2];
+            $data["following"] = $count[0];
+            $data["followers"] = $count[1];
+            $data["posts"] = $count[2];
         }
 
         preg_match('/教育信息[\S\s]*标签信息/', $html, $matches);
