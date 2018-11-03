@@ -132,12 +132,6 @@ class Weibo extends ProviderAbstract
     }
 
 
-    // 退出
-    public function logout()
-    {
-    }
-
-
     public function password($password = "", $pass = "")
     {
         // 需要发送短信验证
@@ -153,7 +147,91 @@ class Weibo extends ProviderAbstract
     }
 
 
-    public function profile($uid = null)
+    /**
+     * 发布
+     * @param array $data
+     * @return array|bool
+     * @throws ErrorException
+     * @throws ResponseException
+     *
+     * return data
+     * {"ok":1,"data":{"created_at":"Mon Oct 29 17:35:23 +0800 2018","id":"4300513258079151","mid":"4300513258079151",
+     * "can_edit":false,"show_additional_indication":0,"text":"\u6211\u7684\u6d4b\u8bd5\u5185\u5bb909:35:23 ",
+     * "textLength":20,"source":"\u5fae\u535a HTML5 \u7248","favorited":false,"pic_ids":[],"is_paid":false,
+     * "mblog_vip_type":0,"user":{"id":2339650945,"screen_name":"\u6700\u540e\u7684\u627f\u8bfaTheEnd",
+     * "profile_image_url":"https:\/\/tva3.sinaimg.cn\/crop.0.0.640.640.180\/8b743d81jw8edkmcgx3j2j20hs0hs0tr.jpg",
+     * "profile_url":"https:\/\/m.weibo.cn\/u\/2339650945?uid=2339650945","statuses_count":306,"verified":false,
+     * "verified_type":-1,"close_blue_v":false,"description":"DESC","gender":"m","mbtype":0,"urank":11,"mbrank":0,
+     * "follow_me":false,"following":false,"followers_count":435,"follow_count":1105,
+     * "cover_image_phone":"https:\/\/tva1.sinaimg.cn\/crop.0.0.640.640.640\/549d0121tw1egm1kjly3jj20hs0hsq4f.jpg",
+     * "avatar_hd":"https:\/\/ww3.sinaimg.cn\/orj480\/8b743d81jw8edkmcgx3j2j20hs0hs0tr.jpg","like":false,
+     * "like_me":false,"badge":{"bind_taobao":1,"unread_pool":1,"unread_pool_ext":1,"user_name_certificate":1}},
+     * "reposts_count":0,"comments_count":0,"attitudes_count":0,"pending_approval_count":0,"isLongText":false,
+     * "reward_exhibition_type":0,"hide_flag":0,"visible":{"type":0,"list_id":0},"mblogtype":0,"more_info_type":0,
+     * "content_auth":0,"bid":"H0dlPxTKT"}}
+     */
+    public function post(array $data)
+    {
+        if (!isset($data["content"])) {
+            return false;
+        }
+        $this->headers["Referer"] = "https://m.weibo.cn/compose/";
+        $this->headers["Cookie"] = $this->getCookies();
+
+        $postData = [
+            "content" => $data["content"],
+            "st"      => $this->getCsrfCode(),
+        ];
+
+        // 上传图片
+        if (isset($data["picture"]) && is_array($data["picture"])) {
+            $picture = [];
+            foreach ($data["picture"] as $resource) {
+                $body = $this->upload($resource);
+                $picture[] = $body["pic_id"];
+            }
+            $postData["picId"] = implode(",", $picture);
+        }
+
+        // 开始发布
+        $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
+        $response = $this->guzzle->request("POST", self::URL_POS, [
+            "headers" => $this->headers,
+            "body"    => http_build_query($postData)
+        ]);
+        if ($response->getStatusCode() != 200) {
+            throw new ResponseException("error http code " . $response->getStatusCode());
+        }
+        $body = json_decode($response->getBody()->getContents(), true);
+        if (!isset($body["ok"]) || $body["ok"] != 1) {
+            throw new ErrorException('data err: ' . $response->getBody()->getContents());
+        }
+
+        // 模拟读取
+        $UNREAD_URL = self::URL_UNR . "?t=" . time() . "000";
+        //$this->guzzle->request("GET", $UNREAD_URL, ["headers" => $this->headers]);
+
+
+        return new ResponsePost([
+            "id"      => $body["data"]["id"],
+            "content" => $data["content"],
+        ]);
+    }
+
+
+    // 关注
+    public function follow($uid = "")
+    {
+    }
+
+
+    // 取消关注
+    public function unfollow($uid = "")
+    {
+    }
+
+
+    public function getProfile($uid = null)
     {
         if (!$uid) {
             throw new RequestException("no uid set");
@@ -267,93 +345,21 @@ class Weibo extends ProviderAbstract
     }
 
 
-    /**
-     * 发布
-     * @param array $data
-     * @return array|bool
-     * @throws ErrorException
-     * @throws ResponseException
-     *
-     * return data
-     * {"ok":1,"data":{"created_at":"Mon Oct 29 17:35:23 +0800 2018","id":"4300513258079151","mid":"4300513258079151",
-     * "can_edit":false,"show_additional_indication":0,"text":"\u6211\u7684\u6d4b\u8bd5\u5185\u5bb909:35:23 ",
-     * "textLength":20,"source":"\u5fae\u535a HTML5 \u7248","favorited":false,"pic_ids":[],"is_paid":false,
-     * "mblog_vip_type":0,"user":{"id":2339650945,"screen_name":"\u6700\u540e\u7684\u627f\u8bfaTheEnd",
-     * "profile_image_url":"https:\/\/tva3.sinaimg.cn\/crop.0.0.640.640.180\/8b743d81jw8edkmcgx3j2j20hs0hs0tr.jpg",
-     * "profile_url":"https:\/\/m.weibo.cn\/u\/2339650945?uid=2339650945","statuses_count":306,"verified":false,
-     * "verified_type":-1,"close_blue_v":false,"description":"DESC","gender":"m","mbtype":0,"urank":11,"mbrank":0,
-     * "follow_me":false,"following":false,"followers_count":435,"follow_count":1105,
-     * "cover_image_phone":"https:\/\/tva1.sinaimg.cn\/crop.0.0.640.640.640\/549d0121tw1egm1kjly3jj20hs0hsq4f.jpg",
-     * "avatar_hd":"https:\/\/ww3.sinaimg.cn\/orj480\/8b743d81jw8edkmcgx3j2j20hs0hs0tr.jpg","like":false,
-     * "like_me":false,"badge":{"bind_taobao":1,"unread_pool":1,"unread_pool_ext":1,"user_name_certificate":1}},
-     * "reposts_count":0,"comments_count":0,"attitudes_count":0,"pending_approval_count":0,"isLongText":false,
-     * "reward_exhibition_type":0,"hide_flag":0,"visible":{"type":0,"list_id":0},"mblogtype":0,"more_info_type":0,
-     * "content_auth":0,"bid":"H0dlPxTKT"}}
-     */
-    public function post(array $data)
+    public function getPosts(array $data)
     {
-        if (!isset($data["content"])) {
-            return false;
-        }
-        $this->headers["Referer"] = "https://m.weibo.cn/compose/";
-        $this->headers["Cookie"] = $this->getCookies();
-
-        $postData = [
-            "content" => $data["content"],
-            "st"      => $this->getCsrfCode(),
-        ];
-
-        // 上传图片
-        if (isset($data["picture"]) && is_array($data["picture"])) {
-            $picture = [];
-            foreach ($data["picture"] as $resource) {
-                $body = $this->upload($resource);
-                $picture[] = $body["pic_id"];
-            }
-            $postData["picId"] = implode(",", $picture);
-        }
-
-        // 开始发布
-        $this->headers["Content-Type"] = "application/x-www-form-urlencoded";
-        $response = $this->guzzle->request("POST", self::URL_POS, [
-            "headers" => $this->headers,
-            "body"    => http_build_query($postData)
-        ]);
-        if ($response->getStatusCode() != 200) {
-            throw new ResponseException("error http code " . $response->getStatusCode());
-        }
-        $body = json_decode($response->getBody()->getContents(), true);
-        if (!isset($body["ok"]) || $body["ok"] != 1) {
-            throw new ErrorException('data err: ' . $response->getBody()->getContents());
-        }
-
-        // 模拟读取
-        $UNREAD_URL = self::URL_UNR . "?t=" . time() . "000";
-        //$this->guzzle->request("GET", $UNREAD_URL, ["headers" => $this->headers]);
-
-
-        return new ResponsePost([
-            "id"      => $body["data"]["id"],
-            "content" => $data["content"],
-        ]);
+        // TODO: Implement getPosts() method.
     }
 
 
-    // 关注
-    public function follow()
+    public function getFollowing(array $data)
     {
+        // TODO: Implement getFollowing() method.
     }
 
 
-    // 取消关注
-    public function unfollow()
+    public function getFollowers(array $data)
     {
-    }
-
-
-    // 访问
-    public function visit()
-    {
+        // TODO: Implement getFollowers() method.
     }
 
 
