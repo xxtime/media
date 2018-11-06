@@ -10,13 +10,14 @@ use Xxtime\Media\ProviderInterface;
  * @method array getCookies()
  * @method array setCookies($string)
  * @method array login()
- * @method array logout()
  * @method array password($password, $pass)
  * @method \Xxtime\Media\Message\ResponsePost post(array $data)
- * @method \Xxtime\Media\Message\ResponseProfile profile(string $uid)
  * @method array follow()
  * @method array unfollow()
- * @method array visit()
+ * @method \Xxtime\Media\Message\ResponseProfile getProfile(string $uid)
+ * @method object getPosts(array $data)
+ * @method object getFollowing(array $data)
+ * @method object getFollowers(array $data)
  */
 class MediaAdaptor
 {
