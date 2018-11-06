@@ -231,10 +231,14 @@ class Weibo extends ProviderAbstract
     }
 
 
+    // TODO :: 暂需要长UID 1004063053424305
     public function getProfile($uid = null)
     {
         if (!$uid) {
             throw new RequestException("no uid set");
+        }
+        if (strlen($uid) < 16) {
+            throw new RequestException("need long uid");
         }
         // warning: use computer user-agent, not mobile user-agent
         $this->headers["Referer"] = "https://weibo.com/p/{$uid}?is_all=1";
@@ -377,8 +381,8 @@ class Weibo extends ProviderAbstract
         ]);
 
 
-        // 新UID 1005056596977823
-        // 旧UID       6596977823
+        // 长UID 1005056596977823
+        // 短UID       6596977823
         preg_match_all('/follow_item(.*)opt_box/U', $response->getBody()->getContents(), $matches);
         if (empty($matches['0'])) {
             return false;
@@ -388,7 +392,7 @@ class Weibo extends ProviderAbstract
         foreach ($matches['0'] as $dom) {
             $dom = str_replace(['\t', '\r\n', '\\'], '', $dom);
             preg_match('/uid=(.*)&fnick=(.*)&sex=([\w]{1})/U', $dom, $m);
-            $uid = '100505' . $m[1];
+            $uid = $m[1];
             $result[$uid]["uid"] = $uid; // old uid
             $result[$uid]["name"] = $m[2];
             $result[$uid]["gender"] = $m[3];
@@ -438,8 +442,8 @@ class Weibo extends ProviderAbstract
         ]);
 
 
-        // 新UID 1005056596977823
-        // 旧UID       6596977823
+        // 长UID 1005056596977823
+        // 短UID       6596977823
         preg_match_all('/follow_item(.*)opt_box/U', $response->getBody()->getContents(), $matches);
         if (empty($matches['0'])) {
             return false;
@@ -449,7 +453,7 @@ class Weibo extends ProviderAbstract
         foreach ($matches['0'] as $dom) {
             $dom = str_replace(['\t', '\r\n', '\\'], '', $dom);
             preg_match('/uid=(.*)&fnick=(.*)&sex=([\w]{1})/U', $dom, $m);
-            $uid = '100505' . $m[1];
+            $uid = $m[1];
             $result[$uid]["uid"] = $uid; // old uid
             $result[$uid]["name"] = $m[2];
             $result[$uid]["gender"] = $m[3];
