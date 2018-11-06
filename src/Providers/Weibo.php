@@ -359,7 +359,62 @@ class Weibo extends ProviderAbstract
 
     public function getFollowers(array $data)
     {
-        // TODO: Implement getFollowers() method.
+        if (empty($data['uid'])) {
+            return false;
+        }
+        $uid = $data['uid'];
+        $page = isset($data['page']) ? $data['page'] : 1;
+
+        $this->headers["Referer"] = "https://weibo.com/p/{$uid}/follow?relate=fans&from=100505&wvr=6&mod=headfans&current=fans";
+        $this->headers["Cookie"] = $this->getCookies();
+        $this->headers["User-Agent"] = self::AGE_WEB;
+        $url = "https://weibo.com/p/{$uid}/follow";
+        $postData = [
+            "pids"           => "Pl_Official_HisRelation__59",
+            "relate"         => "fans",
+            "page"           => $page,
+            "ajaxpagelet"    => 1,
+            "ajaxpagelet_v6" => 1,
+            "__ref"          => "/p/{$uid}/follow?relate=fans&from=100505&wvr=6&mod=headfans&current=fans",
+            "_t"             => "FM_" . time() . '00000',
+        ];
+
+        $response = $this->guzzle->request("GET", $url . '?' . http_build_query($postData), [
+            "headers" => $this->headers,
+        ]);
+
+
+        // 新UID 1005056596977823
+        // 旧UID       6596977823
+        preg_match_all('/follow_item(.*)opt_box/U', $response->getBody()->getContents(), $matches);
+        if (empty($matches['0'])) {
+            return false;
+        }
+
+        $result = [];
+        foreach ($matches['0'] as $dom) {
+            $dom = str_replace(['\t', '\r\n', '\\'], '', $dom);
+            preg_match('/uid=(.*)&fnick=(.*)&sex=([\w]{1})/U', $dom, $m);
+            $uid = '100505' . $m[1];
+            $result[$uid]["uid"] = $uid; // old uid
+            $result[$uid]["name"] = $m[2];
+            $result[$uid]["gender"] = $m[3];
+
+            preg_match_all('/[\s\S]*>([\d]{1,12})<\/a>[\s\S]*/U', $dom, $number);
+            $result[$uid]["following"] = $number[1][0];
+            $result[$uid]["followers"] = $number[1][1];
+            $result[$uid]["posts"] = $number[1][2];
+
+            preg_match('/地址<\/em><span>(.*)<\/span>/U', $dom, $locale);
+            if ($locale) {
+                $result[$uid]["locale"] = $locale[1];
+            }
+            preg_match('/简介<\/em><span>(.*)<\/span>/U', $dom, $desc);
+            if ($desc) {
+                $result[$uid]["desc"] = $desc[1];
+            }
+        }
+        return $result;
     }
 
 
